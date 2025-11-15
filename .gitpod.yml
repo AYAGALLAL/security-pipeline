@@ -1,8 +1,0 @@
-image:
-  file: .gitpod.Dockerfile
-
-tasks:
-  - name: install-tools
-    command: |
-      terraform -version
-      aws --version
