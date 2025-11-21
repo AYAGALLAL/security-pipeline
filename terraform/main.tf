@@ -7,6 +7,10 @@ terraform {
   }
 
   required_version = ">= 1.2"
+
+  backend "s3" {
+    bucket = "pfs-final2025-terraform-state"
+  }
 }
 
 provider "aws" {
