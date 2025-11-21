@@ -2,12 +2,13 @@
 resource "aws_iam_openid_connect_provider" "gitlab" {
   url = "https://gitlab.com"
 
+  # Must match the "aud" claim in the GitLab OIDC token
   client_id_list = [
-    "sts.amazonaws.com"
+    "https://sts.amazonaws.com",
   ]
 
   thumbprint_list = [
-    "A031C46782E6E6C662C2C87C76DA9AA62CCABD8E"
+    "A031C46782E6E6C662C2C87C76DA9AA62CCABD8E",
   ]
 }
 
@@ -25,8 +26,11 @@ resource "aws_iam_role" "gitlab_cicd_role" {
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
-          StringLike = {
-            "gitlab.com:sub" = "project_path:aaa4102647/pfs-final2025:*"
+          StringEquals = {
+            # Must match the "sub" claim from the decoded token
+            "gitlab.com:sub" = "project_path:aaa4102647/pfs-final2025:ref_type:branch:ref:main",
+            # Must match the "aud" claim
+            "gitlab.com:aud" = "https://sts.amazonaws.com"
           }
         }
       }
