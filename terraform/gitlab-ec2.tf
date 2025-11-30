@@ -102,9 +102,12 @@ resource "aws_instance" "prowler_runner" {
     #!/bin/bash
     yum update -y
 
+    #Install git if not already
+    dnf install -y git
+
     # -------- Docker --------
-    amazon-linux-extras install docker -y
-    systemctl enable docker
+    dnf install -y docker
+    systemctl enable --now docker
     systemctl start docker
     usermod -aG docker ec2-user
 
@@ -114,10 +117,13 @@ resource "aws_instance" "prowler_runner" {
     mv gitlab-runner-linux-amd64 /usr/local/bin/gitlab-runner
 
     useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+    
+    usermod -aG docker gitlab-runner
+
     gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
     gitlab-runner start
 
-    # Register runner (replace TOKEN and URL)
+    # Register runner
     gitlab-runner register --non-interactive \
       --url "https://gitlab.com/" \
       --registration-token "glrt-zVRpm6jjHL0_nRZEkz2-YG86MQpwOjE5Y2x3Ygp0OjMKdTppd3czZhg.01.1j07h9yrg" \
