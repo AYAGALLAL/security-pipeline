@@ -1,4 +1,6 @@
+
 # OIDC provider for GitLab
+/*
 resource "aws_iam_openid_connect_provider" "gitlab" {
   url = "https://gitlab.com"
 
@@ -37,3 +39,4 @@ resource "aws_iam_role" "gitlab_cicd_role" {
     ]
   })
 }
+*/
