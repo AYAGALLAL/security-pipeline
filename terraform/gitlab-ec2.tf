@@ -120,7 +120,7 @@ resource "aws_instance" "prowler_runner" {
     # Register runner (replace TOKEN and URL)
     gitlab-runner register --non-interactive \
       --url "https://gitlab.com/" \
-      --registration-token "glrt-f6iviif5iZHeJ0PBOzXDyG86MQpwOjE5Y2x3Ygp0OjMKdTppdjgyZhg.01.1j1apx23vE" \
+      --registration-token "glrt-zVRpm6jjHL0_nRZEkz2-YG86MQpwOjE5Y2x3Ygp0OjMKdTppd3czZhg.01.1j07h9yrg" \
       --executor "shell" \
       --description "Prowler Runner" \
       --tag-list "prowler,aws" \
