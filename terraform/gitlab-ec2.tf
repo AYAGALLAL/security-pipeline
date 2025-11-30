@@ -87,7 +87,7 @@ resource "aws_security_group" "prowler_runner_sg" {
 # EC2 Instance for GitLab Runner + Prowler + CloudWatch Agent
 # -----------------------------
 resource "aws_instance" "prowler_runner" {
-  ami                    = "ami-0a23a9827c6c23a52"
+  ami                    = "ami-0a6793a25df710b06"
   instance_type          = "t3.micro"
   key_name               = "key_pair"          
   iam_instance_profile   = aws_iam_instance_profile.prowler_cloudwatch_profile.name
@@ -120,7 +120,7 @@ resource "aws_instance" "prowler_runner" {
     # Register runner (replace TOKEN and URL)
     gitlab-runner register --non-interactive \
       --url "https://gitlab.com/" \
-      --registration-token "GLAB_RUNNER_TOKEN_HERE" \
+      --registration-token "glrt-f6iviif5iZHeJ0PBOzXDyG86MQpwOjE5Y2x3Ygp0OjMKdTppdjgyZhg.01.1j1apx23vE" \
       --executor "shell" \
       --description "Prowler Runner" \
       --tag-list "prowler,aws" \
