@@ -83,6 +83,11 @@ resource "aws_security_group" "prowler_runner_sg" {
   }
 }
 
+resource "aws_iam_role_policy_attachment" "prowler_security_audit" {
+  role       = aws_iam_role.cloudwatch_role.name
+  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+}
+
 # -----------------------------
 # EC2 Instance for GitLab Runner + Prowler + CloudWatch Agent
 # -----------------------------
@@ -119,6 +124,11 @@ resource "aws_instance" "prowler_runner" {
     useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
     
     usermod -aG docker gitlab-runner
+
+    # -------- Prowler reports directory (IMPORTANT) --------
+    mkdir -p /var/lib/prowler/reports
+    chown -R gitlab-runner:gitlab-runner /var/lib/prowler
+    chmod -R 775 /var/lib/prowler
 
     gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
     gitlab-runner start
