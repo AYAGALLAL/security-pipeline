@@ -27,14 +27,14 @@ resource "aws_iam_role" "cloudwatch_role" {
   })
 }
 
-resource "aws_iam_role_policy" "cloudwatch_policy" {
+resource "aws_iam_role_policy" "cloudwatch_and_s3_policy" {
   name = "cloudwatch-prowler-ec2-policy"
   role = aws_iam_role.cloudwatch_role.name
 
-  # You can tighten this later; for now, allow CloudWatch Logs fully
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # CloudWatch Logs
       {
         Effect = "Allow"
         Action = [
@@ -44,10 +44,38 @@ resource "aws_iam_role_policy" "cloudwatch_policy" {
           "logs:DescribeLogStreams"
         ]
         Resource = "arn:aws:logs:*:*:*"
+      },
+
+      # S3 upload
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:AbortMultipartUpload",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListMultipartUploadParts"
+        ]
+        Resource = "arn:aws:s3:::security-reports-pfs2025/prowler/*"
+      },
+
+      # S3 list bucket
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+        Resource = "arn:aws:s3:::security-reports-pfs2025"
+        Condition = {
+          StringLike = {
+            "s3:prefix" = ["prowler/*"]
+          }
+        }
       }
     ]
   })
 }
+
 
 resource "aws_iam_instance_profile" "prowler_cloudwatch_profile" {
   name = "prowler-cloudwatch-instance-profile"
@@ -143,8 +171,7 @@ user_data = <<-EOF
   # Register runner
   gitlab-runner register --non-interactive \
     --url "https://gitlab.com/" \
-    --registration-token "glrt-zVRpm6jjHL0_nRZEkz2-YG86MQpwOjE5Y2x3Ygp0OjMKdTppd3czZhg.01.1j07h9yrg" \
-    --executor "shell" \
+    --registration-token "AUTHENTICATION TOKEN"
     --description "Prowler Runner" \
     --tag-list "prowler,aws" \
     --run-untagged="false" \
@@ -198,7 +225,11 @@ resource "aws_iam_role_policy" "runner_publish_sns" {
         Sid      = "AllowPublishToSecurityAlertsTopic"
         Effect   = "Allow"
         Action   = "sns:Publish"
-        Resource = aws_sns_topic.security_alerts_sns.arn
+        Resource = [
+          aws_sns_topic.security_alerts_sns.arn,
+          aws_sns_topic.security_alerts_sms.arn
+        ]
+
       }
     ]
   })

@@ -38,3 +38,13 @@ resource "aws_sqs_queue_policy" "security_queue_policy" {
   policy    = data.aws_iam_policy_document.sqs_allow_sns.json
 }
 
+
+resource "aws_sns_topic" "security_alerts_sms" {
+  name = "security-alerts-sms"
+}
+
+resource "aws_sns_topic_subscription" "sms_subscription" {
+  topic_arn = aws_sns_topic.security_alerts_sms.arn
+  protocol  = "sms"
+  endpoint  = "+212*********"
+}

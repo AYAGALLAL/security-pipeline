@@ -1,10 +1,3 @@
-// aws_lambda_function
-// aws_iam_role_policy
-// aws_iam_policy_document
-// aws_lambda_event_source_mapping
-// archive_file
-// aws_iam_role
-
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
@@ -19,6 +12,8 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 data "aws_iam_policy_document" "lambda_policy" {
+
+  # CloudWatch Logs
   statement {
     effect = "Allow"
     actions = [
@@ -29,6 +24,7 @@ data "aws_iam_policy_document" "lambda_policy" {
     resources = ["arn:aws:logs:*:*:*"]
   }
 
+  # SQS consume
   statement {
     effect = "Allow"
     actions = [
@@ -39,7 +35,7 @@ data "aws_iam_policy_document" "lambda_policy" {
     resources = [aws_sqs_queue.security_queue.arn]
   }
 
-  # Remediation actions:
+  # EC2 remediation (optional)
   statement {
     effect = "Allow"
     actions = [
@@ -48,46 +44,31 @@ data "aws_iam_policy_document" "lambda_policy" {
     ]
     resources = ["*"]
   }
-  
-   # Read Prowler reports from the designated S3 bucket
+
+  # Read prowler reports (bucket + objects)
   statement {
     effect = "Allow"
-    actions = [
-      "s3:ListBucket"
-    ]
-    resources = [
-      "arn:aws:s3:::${var.security_reports_bucket}"
-    ]
-
-    # Optional but recommended: restrict listing to the reports prefix
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values   = ["${var.security_reports_prefix}*"]
-    }
+    actions = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::security-reports-pfs2025"]
   }
 
   statement {
     effect = "Allow"
-    actions = [
-      "s3:GetObject"
-    ]
-    resources = [
-      "arn:aws:s3:::${var.security_reports_bucket}/${var.security_reports_prefix}*"
-    ]
+    actions = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::security-reports-pfs2025/prowler/*"]
   }
 
-  # Remediation: allow setting Public Access Block on buckets (account-wide)
+  # Remediation: set/get Public Access Block on ANY bucket
   statement {
     effect = "Allow"
     actions = [
-      "s3:PutPublicAccessBlock"
+      "s3:PutBucketPublicAccessBlock",
+      "s3:GetBucketPublicAccessBlock"
     ]
-    resources = [
-      "arn:aws:s3:::*"
-    ]
+    resources = ["arn:aws:s3:::*"]
   }
 }
+
 
 resource "aws_iam_role_policy" "lambda_inline" {
   name   = "security-remediation-policy"
@@ -112,7 +93,7 @@ resource "aws_lambda_function" "lambda_remediation" {
   filename         = data.archive_file.lambda_code.output_path
   function_name    = "lambda_remediation"
   role             = aws_iam_role.lambda_exec.arn
-  handler          = "lambda_function.handler"        # file: lambda_function.py, function: handler
+  handler          = "lambda_function.lambda_handler"  
   source_code_hash = data.archive_file.lambda_code.output_base64sha256
 
   runtime = "python3.12"
@@ -121,8 +102,8 @@ resource "aws_lambda_function" "lambda_remediation" {
     variables = {
       ENVIRONMENT = "production"
       LOG_LEVEL   = "info"
-      SECURITY_REPORTS_BUCKET = var.security_reports_bucket
-      SECURITY_REPORTS_PREFIX = var.security_reports_prefix
+      SECURITY_REPORTS_BUCKET = "security-reports-pfs2025"
+      SECURITY_REPORTS_PREFIX = "prowler/"
     }
   }
 
