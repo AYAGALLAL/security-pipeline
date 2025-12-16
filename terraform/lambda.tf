@@ -48,6 +48,45 @@ data "aws_iam_policy_document" "lambda_policy" {
     ]
     resources = ["*"]
   }
+  
+   # Read Prowler reports from the designated S3 bucket
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.security_reports_bucket}"
+    ]
+
+    # Optional but recommended: restrict listing to the reports prefix
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["${var.security_reports_prefix}*"]
+    }
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.security_reports_bucket}/${var.security_reports_prefix}*"
+    ]
+  }
+
+  # Remediation: allow setting Public Access Block on buckets (account-wide)
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutPublicAccessBlock"
+    ]
+    resources = [
+      "arn:aws:s3:::*"
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_inline" {
@@ -82,6 +121,8 @@ resource "aws_lambda_function" "lambda_remediation" {
     variables = {
       ENVIRONMENT = "production"
       LOG_LEVEL   = "info"
+      SECURITY_REPORTS_BUCKET = var.security_reports_bucket
+      SECURITY_REPORTS_PREFIX = var.security_reports_prefix
     }
   }
 
