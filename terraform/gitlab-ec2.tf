@@ -168,14 +168,14 @@ user_data = <<-EOF
   gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
   gitlab-runner start
 
-  # Register runner
+  # Register runner (glrt token workflow)
   gitlab-runner register --non-interactive \
-    --url "https://gitlab.com/" \
-    --registration-token "AUTHENTICATION TOKEN"
-    --description "Prowler Runner" \
-    --tag-list "prowler,aws" \
-    --run-untagged="false" \
-    --locked="false"
+  --config "/etc/gitlab-runner/config.toml" \
+  --url "https://gitlab.com/" \
+  --token "${var.authen_token}" \
+  --name "Prowler Runner" \
+  --executor "shell"
+
 
   # -------- CloudWatch Agent --------
   yum install -y amazon-cloudwatch-agent
@@ -233,4 +233,9 @@ resource "aws_iam_role_policy" "runner_publish_sns" {
       }
     ]
   })
+}
+
+variable "authen_token" {
+  type        = string
+  description = "gitlab runner authentication token"
 }
